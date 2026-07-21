@@ -22,7 +22,6 @@ import os
 import uuid
 from typing import Optional
 
-from dotenv import load_dotenv
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
     Distance,
@@ -33,8 +32,7 @@ from qdrant_client.models import (
     PointStruct,
     VectorParams,
 )
-
-load_dotenv()
+from config import settings
 
 
 class QdrantMemoryStore:
@@ -61,8 +59,8 @@ class QdrantMemoryStore:
             api_key: Qdrant API key. Falls back to QDRANT_API_KEY env var.
         """
         self.collection_name = collection_name or self.DEFAULT_COLLECTION
-        self.url = url or os.getenv("QDRANT_URL")
-        self.api_key = api_key or os.getenv("QDRANT_API_KEY")
+        self.url = url or settings.QDRANT_URL
+        self.api_key = api_key or settings.QDRANT_API_KEY
 
         if not self.url or not self.api_key:
             raise ValueError(

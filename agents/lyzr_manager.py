@@ -21,10 +21,8 @@ import os
 import json
 from typing import Optional
 
-from dotenv import load_dotenv
 from lyzr_python_sdk import LyzrAgentAPI
-
-load_dotenv()
+from config import settings
 
 # Path to cache agent IDs between runs
 AGENT_CACHE_FILE = os.path.join(
@@ -42,7 +40,7 @@ class LyzrManager:
         Args:
             api_key: Lyzr API key. Falls back to LYZR_API_KEY env var.
         """
-        self.api_key = api_key or os.getenv("LYZR_API_KEY")
+        self.api_key = api_key or settings.LYZR_API_KEY
 
         if not self.api_key:
             raise ValueError(

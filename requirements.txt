@@ -21,5 +21,11 @@ uvicorn[standard]
 # Environment Variables
 python-dotenv
 
-# Data Validation
+# Data Validation & Config
 pydantic
+pydantic-settings
+
+# Testing & Dev
+pytest
+pytest-asyncio
+httpx

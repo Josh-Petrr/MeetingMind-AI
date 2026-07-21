@@ -16,36 +16,26 @@ sys.stdout.reconfigure(encoding="utf-8")
 # Add the project root to the Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
-
-def check_credentials():
-    """Check if Qdrant credentials are available."""
-    url = os.getenv("QDRANT_URL")
-    key = os.getenv("QDRANT_API_KEY")
-    if not url or not key:
-        print("[SKIP] QDRANT_URL and QDRANT_API_KEY not found in .env")
-        print("       Create a free Qdrant Cloud cluster at https://cloud.qdrant.io/")
-        print("       Then add credentials to your .env file")
-        sys.exit(0)
-    print(f"[OK] Qdrant credentials found (URL: {url[:30]}...)")
-    return True
-
+import pytest
+from config import settings
+import random
 
 def make_fake_embedding(dim=3072):
     """Generate a random embedding vector for testing (not real embeddings)."""
     return [random.uniform(-1, 1) for _ in range(dim)]
 
 
-def test_connection():
-    """Test that we can connect to Qdrant Cloud."""
+@pytest.fixture(scope="module")
+def store():
+    """Pytest fixture to provide and clean up Qdrant store."""
     from memory.qdrant_store import QdrantMemoryStore
     from qdrant_client import QdrantClient
 
-    url = os.getenv("QDRANT_URL")
-    key = os.getenv("QDRANT_API_KEY")
+    url = settings.QDRANT_URL
+    key = settings.QDRANT_API_KEY
+    if not url or not key:
+        pytest.skip("QDRANT_URL and QDRANT_API_KEY not found in env")
+        
     client = QdrantClient(url=url, api_key=key)
     try:
         client.delete_collection("meetingmind_test")
@@ -53,10 +43,17 @@ def test_connection():
         pass
 
     store = QdrantMemoryStore(collection_name="meetingmind_test")
+    yield store
+    
+    try:
+        store.client.delete_collection("meetingmind_test")
+    except Exception:
+        pass
+
+def test_connection(store):
+    """Test that we can connect to Qdrant Cloud."""
     info = store.get_collection_info()
-    print(f"[PASS] Connected to Qdrant Cloud")
-    print(f"       Collection: {info['name']}, Status: {info['status']}, Points: {info['points_count']}")
-    return store
+    assert info['name'] == "meetingmind_test"
 
 
 def test_store_memory(store):
@@ -192,34 +189,4 @@ def test_delete_meeting_memories(store):
     print("[PASS] Verified meeting_001 memories are fully deleted")
 
 
-def cleanup(store):
-    """Clean up test data."""
-    try:
-        store.client.delete_collection(collection_name="meetingmind_test")
-        print("[INFO] Cleaned up test collection")
-    except Exception as e:
-        print(f"[WARN] Cleanup failed: {e}")
 
-
-if __name__ == "__main__":
-    print("=" * 60)
-    print("  MeetingMind AI -- Qdrant Memory Store Tests")
-    print("=" * 60)
-    print()
-
-    check_credentials()
-
-    store = test_connection()
-    test_store_memory(store)
-    test_store_multiple_memories(store)
-    test_search(store)
-    test_search_with_filter(store)
-    test_get_meeting_memories(store)
-    test_org_isolation(store)
-    test_delete_meeting_memories(store)
-    cleanup(store)
-
-    print()
-    print("=" * 60)
-    print("  All Qdrant Memory Store tests completed!")
-    print("=" * 60)

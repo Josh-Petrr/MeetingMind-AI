@@ -15,21 +15,18 @@ sys.stdout.reconfigure(encoding="utf-8")
 # Add the project root to the Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from dotenv import load_dotenv
+import pytest
+from config import settings
 
-load_dotenv()
 
-
-def check_credentials():
-    """Check if Google API key is available."""
-    key = os.getenv("GOOGLE_API_KEY")
+def test_embedding_generation():
+    """Test that we can generate embeddings from the API."""
+    # Ensure API key is present
+    key = settings.GOOGLE_API_KEY
     if not key:
-        print("[SKIP] GOOGLE_API_KEY not found in .env")
-        print("       Get a free key at https://aistudio.google.com/apikey")
-        print("       Then add GOOGLE_API_KEY=your_key to your .env file")
-        sys.exit(0)
+        pytest.skip("GOOGLE_API_KEY not found in .env")
     print(f"[OK] Google API key found (starts with: {key[:8]}...)")
-    return True
+    assert key is not None
 
 
 def test_single_embedding():
@@ -135,8 +132,7 @@ if __name__ == "__main__":
     print("=" * 60)
     print()
 
-    check_credentials()
-
+    test_embedding_generation()
     test_single_embedding()
     test_batch_embedding()
     test_semantic_similarity()
