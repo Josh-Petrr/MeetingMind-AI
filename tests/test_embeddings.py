@@ -23,8 +23,8 @@ def test_embedding_generation():
     """Test that we can generate embeddings from the API."""
     # Ensure API key is present
     key = settings.GOOGLE_API_KEY
-    if not key:
-        pytest.skip("GOOGLE_API_KEY not found in .env")
+    if not key or key.startswith("mock_"):
+        pytest.skip("Valid GOOGLE_API_KEY not found (mock key detected)")
     print(f"[OK] Google API key found (starts with: {key[:8]}...)")
     assert key is not None
 

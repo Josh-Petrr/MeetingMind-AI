@@ -33,8 +33,8 @@ def store():
 
     url = settings.QDRANT_URL
     key = settings.QDRANT_API_KEY
-    if not url or not key:
-        pytest.skip("QDRANT_URL and QDRANT_API_KEY not found in env")
+    if not url or not key or key.startswith("mock_"):
+        pytest.skip("Valid QDRANT_URL and QDRANT_API_KEY not found (mock key detected)")
         
     client = QdrantClient(url=url, api_key=key)
     try:
