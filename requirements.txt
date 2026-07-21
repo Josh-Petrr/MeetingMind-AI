@@ -1,0 +1,25 @@
+# Core Agent Framework (Hackathon Mandatory)
+lyzr
+
+# Vector Database (Hackathon Mandatory)
+qdrant-client
+
+# LLM Provider - Google Gemini
+google-genai
+
+# PII Masking
+presidio-analyzer
+presidio-anonymizer
+
+# NLP model for Presidio
+spacy
+
+# API Framework
+fastapi
+uvicorn[standard]
+
+# Environment Variables
+python-dotenv
+
+# Data Validation
+pydantic
