@@ -1,5 +1,5 @@
 # Core Agent Framework (Hackathon Mandatory)
-lyzr
+lyzr-python-sdk
 
 # Vector Database (Hackathon Mandatory)
 qdrant-client
