@@ -20,6 +20,7 @@ export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   // Load messages from sessionStorage
   useEffect(() => {
@@ -54,7 +55,7 @@ export default function SearchPage() {
     setIsTyping(true);
 
     try {
-      const res = await fetch("http://localhost:8000/chat", {
+      const res = await fetch(`${apiUrl}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: userMsg, org_id: "org_demo_123" }),
@@ -115,7 +116,7 @@ export default function SearchPage() {
                   <div className="grid grid-cols-1 gap-2">
                     {msg.sources.map((src, j) => (
                       <div key={j} className="bg-slate-900/50 border border-white/5 rounded-xl p-3 text-sm hover:border-blue-500/30 transition-colors">
-                        <p className="text-slate-300 text-xs italic mb-2 line-clamp-2">"{src.text}"</p>
+                        <p className="text-slate-300 text-xs italic mb-2 line-clamp-2">\"{src.text}\"</p>
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] text-slate-500 font-mono px-2 py-0.5 rounded bg-white/5">{src.memory_type}</span>
                           <Link href={`/review/${src.meeting_id}`} className="text-blue-400 hover:text-blue-300 flex items-center gap-1 font-medium text-xs">
@@ -170,3 +171,4 @@ export default function SearchPage() {
     </div>
   );
 }
+

@@ -8,6 +8,7 @@ export default function Home() {
   const [transcript, setTranscript] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const router = useRouter();
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   // Load from session storage to persist across tabs
   useEffect(() => {
@@ -25,7 +26,7 @@ export default function Home() {
 
     setIsProcessing(true);
     try {
-      const response = await fetch("http://localhost:8000/process-meeting", {
+      const response = await fetch(`${apiUrl}/process-meeting`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -137,3 +138,4 @@ function FileTextIcon(props: any) {
     </svg>
   );
 }
+

@@ -8,9 +8,10 @@ export default function MeetingsPage() {
   const [meetings, setMeetings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   useEffect(() => {
-    fetch("http://localhost:8000/meetings")
+    fetch(`${apiUrl}/meetings`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load meetings");
         return res.json();
@@ -24,7 +25,7 @@ export default function MeetingsPage() {
         setError("Could not connect to backend server.");
         setLoading(false);
       });
-  }, []);
+  }, [apiUrl]);
 
   return (
     <div className="p-8 max-w-6xl mx-auto h-full flex flex-col">
@@ -103,3 +104,4 @@ export default function MeetingsPage() {
     </div>
   );
 }
+

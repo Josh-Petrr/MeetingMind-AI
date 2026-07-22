@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 export function GlobalPoller() {
   const router = useRouter();
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -27,7 +28,7 @@ export function GlobalPoller() {
 
       for (const meetingId of pendingList) {
         try {
-          const res = await fetch(`http://localhost:8000/review/${meetingId}`);
+          const res = await fetch(`${apiUrl}/review/${meetingId}`);
           if (res.ok) {
             const json = await res.json();
             if (json.pipeline_status === "completed" || json.boris_output) {
@@ -69,7 +70,8 @@ export function GlobalPoller() {
     interval = setInterval(checkPendingMeetings, 4000); // Check every 4 seconds
 
     return () => clearInterval(interval);
-  }, [router]);
+  }, [router, apiUrl]);
 
   return null;
 }
+
