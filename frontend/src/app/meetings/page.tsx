@@ -8,10 +8,10 @@ export default function MeetingsPage() {
   const [meetings, setMeetings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/$/, "");
 
   useEffect(() => {
-    fetch(`${apiUrl}/meetings`)
+    fetch(`${baseUrl}/meetings`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load meetings");
         return res.json();

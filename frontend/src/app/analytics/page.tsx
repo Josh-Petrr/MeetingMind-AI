@@ -9,10 +9,10 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const pageSize = 10;
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/$/, "");
 
   useEffect(() => {
-    fetch(`${apiUrl}/meetings`)
+    fetch(`${baseUrl}/meetings`)
       .then(res => res.json())
       .then(data => {
         setMeetings(data.meetings || []);
