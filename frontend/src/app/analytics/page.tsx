@@ -50,11 +50,18 @@ export default function AnalyticsPage() {
   // Prepare chart data (slice based on page, reverse to show chronological order)
   const startIndex = page * pageSize;
   const endIndex = startIndex + pageSize;
-  const chartData = [...meetings].slice(startIndex, endIndex).reverse().map(m => ({
-    name: m.meeting_id.substring(0, 8) + "...",
-    Actions: m.action_items_count,
-    Decisions: m.decisions_count
-  }));
+  const slicedMeetings = [...meetings].slice(startIndex, endIndex);
+  
+  const chartData = slicedMeetings.reverse().map((m) => {
+    // Extract the unique hash part (e.g. from 'meeting_1a2b3c4d' -> '1a2b3c4d')
+    const uniqueHash = m.meeting_id.replace("meeting_", "");
+    
+    return {
+      name: `ID: ${uniqueHash}`,
+      Actions: m.action_items_count,
+      Decisions: m.decisions_count
+    };
+  });
 
   const hasNewer = page > 0;
   const hasOlder = endIndex < meetings.length;
