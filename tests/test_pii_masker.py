@@ -74,14 +74,15 @@ def test_mask_with_report():
 def test_sample_transcript():
     """Test against the actual sample transcript file."""
     masker = PIIMasker()
-    transcript_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        "data",
-        "sample_transcript.txt",
-    )
-
-    with open(transcript_path, "r", encoding="utf-8") as f:
-        transcript = f.read()
+    transcript = """
+    Meeting Transcript
+    Participants: John Smith, Sarah Connor
+    
+    John: Hey Sarah, can you reach me at john.smith@company.com? 
+    My personal number is 555-123-4567.
+    Sarah: Got it. Also, I need your SSN for the background check.
+    John: Sure, it's 123-45-6789.
+    """
 
     report = masker.mask_with_report(transcript)
 
