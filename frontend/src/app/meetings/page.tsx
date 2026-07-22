@@ -25,7 +25,7 @@ export default function MeetingsPage() {
         setError("Could not connect to backend server.");
         setLoading(false);
       });
-  }, [apiUrl]);
+  }, [baseUrl]);
 
   return (
     <div className="p-8 max-w-6xl mx-auto h-full flex flex-col">

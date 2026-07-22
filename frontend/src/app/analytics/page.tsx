@@ -18,7 +18,7 @@ export default function AnalyticsPage() {
         setMeetings(data.meetings || []);
         setLoading(false);
       });
-  }, [apiUrl]);
+  }, [baseUrl]);
 
   if (loading) {
     return (

@@ -30,7 +30,7 @@ export default function ReviewPage() {
 
     const fetchData = async () => {
       try {
-        const res = await fetch(`${apiUrl}/review/${meetingId}`);
+        const res = await fetch(`${baseUrl}/review/${meetingId}`);
         if (res.ok) {
           const json = await res.json();
           // If the pipeline status is complete or it has the data
@@ -56,7 +56,7 @@ export default function ReviewPage() {
     interval = setInterval(fetchData, 3000); // poll every 3s
 
     return () => clearInterval(interval);
-  }, [meetingId, apiUrl]);
+  }, [meetingId, baseUrl]);
 
   if (loading) {
     return (
