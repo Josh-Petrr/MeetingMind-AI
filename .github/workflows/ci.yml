@@ -31,6 +31,7 @@ jobs:
         GOOGLE_API_KEY: mock_google_key
         QDRANT_URL: http://localhost:6333
         QDRANT_API_KEY: mock_qdrant_key
+        DATABASE_URL: mock_database_url
       run: |
         pytest tests/
 
