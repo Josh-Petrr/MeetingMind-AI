@@ -22,6 +22,7 @@ export default function ReviewPage() {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   // Poll the backend until the meeting is processed
   useEffect(() => {
@@ -29,7 +30,7 @@ export default function ReviewPage() {
 
     const fetchData = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/review/${meetingId}`);
+        const res = await fetch(`${apiUrl}/review/${meetingId}`);
         if (res.ok) {
           const json = await res.json();
           // If the pipeline status is complete or it has the data
@@ -55,7 +56,7 @@ export default function ReviewPage() {
     interval = setInterval(fetchData, 3000); // poll every 3s
 
     return () => clearInterval(interval);
-  }, [meetingId]);
+  }, [meetingId, apiUrl]);
 
   if (loading) {
     return (
@@ -248,3 +249,4 @@ export default function ReviewPage() {
     </div>
   );
 }
+

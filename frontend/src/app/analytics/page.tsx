@@ -9,15 +9,16 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const pageSize = 10;
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   useEffect(() => {
-    fetch("http://localhost:8000/meetings")
+    fetch(`${apiUrl}/meetings`)
       .then(res => res.json())
       .then(data => {
         setMeetings(data.meetings || []);
         setLoading(false);
       });
-  }, []);
+  }, [apiUrl]);
 
   if (loading) {
     return (
@@ -125,3 +126,4 @@ export default function AnalyticsPage() {
     </div>
   );
 }
+
