@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Brain, FileText, Settings } from "lucide-react";
+import { LayoutDashboard, Brain, FileText, BarChart3 } from "lucide-react";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -26,7 +26,7 @@ export function Sidebar() {
     {
       name: "Analytics",
       href: "/analytics",
-      icon: LayoutDashboard,
+      icon: BarChart3,
     },
   ];
 
@@ -59,12 +59,6 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="p-4 border-t border-white/10">
-        <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-slate-400 w-full hover:text-white hover:bg-white/5 transition-colors">
-          <Settings className="w-4 h-4" />
-          Settings
-        </button>
-      </div>
     </aside>
   );
 }

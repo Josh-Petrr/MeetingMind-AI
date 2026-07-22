@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { UploadCloud, Bot, ArrowRight, Loader2 } from "lucide-react";
+import { UploadCloud, Bot, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [transcript, setTranscript] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [lastSubmittedId, setLastSubmittedId] = useState<string | null>(null);
   const router = useRouter();
   const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/$/, "");
 
@@ -14,6 +15,10 @@ export default function Home() {
   useEffect(() => {
     const saved = sessionStorage.getItem("draftTranscript");
     if (saved) setTranscript(saved);
+    
+    // Check if a meeting was recently submitted
+    const lastId = sessionStorage.getItem("lastSubmittedMeetingId");
+    if (lastId) setLastSubmittedId(lastId);
   }, []);
 
   // Save to session storage whenever it changes
@@ -50,6 +55,13 @@ export default function Home() {
       pendingList.push(data.meeting_id);
       sessionStorage.setItem("pendingMeetings", JSON.stringify(pendingList));
 
+      // Clear the transcript so it doesn't confuse the user if they return
+      setTranscript("");
+      sessionStorage.removeItem("draftTranscript");
+
+      // Remember the last submitted meeting so we can show a banner
+      sessionStorage.setItem("lastSubmittedMeetingId", data.meeting_id);
+
       // Show a toast that background processing started
       const { toast } = await import("react-hot-toast");
       toast("Agents dispatched! We'll notify you when extraction is complete.", {
@@ -74,6 +86,35 @@ export default function Home() {
           Paste your raw meeting transcript below. Our agentic squad will mask PII, summarize the narrative, and extract decisions.
         </p>
       </header>
+
+      {/* Success banner — shows when user returns after submitting */}
+      {lastSubmittedId && (
+        <div className="mb-4 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+            <p className="text-sm text-emerald-300">
+              Your meeting <span className="font-mono text-xs">{lastSubmittedId}</span> was submitted and is being processed.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push(`/review/${lastSubmittedId}`)}
+              className="px-3 py-1.5 text-xs font-medium bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded-lg transition-colors"
+            >
+              View Report
+            </button>
+            <button
+              onClick={() => {
+                setLastSubmittedId(null);
+                sessionStorage.removeItem("lastSubmittedMeetingId");
+              }}
+              className="px-2 py-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 glass-panel rounded-2xl p-6 flex flex-col gap-6 relative">
         {isProcessing && (

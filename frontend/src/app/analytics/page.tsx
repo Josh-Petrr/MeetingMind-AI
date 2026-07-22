@@ -7,6 +7,7 @@ import { TrendingUp, CheckCircle2, ShieldCheck, Loader2, ChevronLeft, ChevronRig
 export default function AnalyticsPage() {
   const [meetings, setMeetings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [page, setPage] = useState(0);
   const pageSize = 10;
   const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/$/, "");
@@ -17,6 +18,10 @@ export default function AnalyticsPage() {
       .then(data => {
         setMeetings(data.meetings || []);
         setLoading(false);
+      })
+      .catch(() => {
+        setError(true);
+        setLoading(false);
       });
   }, [baseUrl]);
 
@@ -24,6 +29,15 @@ export default function AnalyticsPage() {
     return (
       <div className="flex justify-center items-center h-full">
         <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col justify-center items-center h-full text-slate-400">
+        <p className="text-lg mb-2">Could not connect to the backend.</p>
+        <p className="text-sm">Please check that the API server is running.</p>
       </div>
     );
   }

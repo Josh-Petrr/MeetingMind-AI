@@ -70,12 +70,20 @@ export default function MeetingsPage() {
                   <span className="font-mono text-xs text-blue-400 font-semibold px-2.5 py-1 rounded-md bg-blue-500/10 border border-blue-500/20">
                     {m.meeting_id}
                   </span>
-                  <span className="text-xs text-slate-400 capitalize bg-white/5 px-2.5 py-1 rounded-md border border-white/5">
-                    Status: {m.status}
+                  <span className={`text-xs capitalize px-2.5 py-1 rounded-md border ${
+                    m.status === "completed" 
+                      ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" 
+                      : m.status === "error"
+                      ? "text-red-400 bg-red-500/10 border-red-500/20"
+                      : "text-amber-400 bg-amber-500/10 border-amber-500/20 animate-pulse"
+                  }`}>
+                    {m.status === "processing" ? "⏳ Processing..." : m.status}
                   </span>
                 </div>
                 <p className="text-slate-300 text-sm mb-6 leading-relaxed">
-                  {m.summary_snippet}
+                  {m.status === "processing" 
+                    ? "Agents are still analyzing this transcript. Check back shortly."
+                    : m.summary_snippet}
                 </p>
               </div>
 
@@ -90,12 +98,18 @@ export default function MeetingsPage() {
                     {m.decisions_count} Decisions
                   </span>
                 </div>
-                <Link
-                  href={`/review/${m.meeting_id}`}
-                  className="flex items-center gap-1 text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors group-hover:translate-x-1 duration-200"
-                >
-                  View Report <ArrowRight className="w-4 h-4" />
-                </Link>
+                {m.status === "completed" ? (
+                  <Link
+                    href={`/review/${m.meeting_id}`}
+                    className="flex items-center gap-1 text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors group-hover:translate-x-1 duration-200"
+                  >
+                    View Report <ArrowRight className="w-4 h-4" />
+                  </Link>
+                ) : (
+                  <span className="text-xs text-slate-500 italic">
+                    {m.status === "error" ? "Failed" : "Pending..."}
+                  </span>
+                )}
               </div>
             </div>
           ))}

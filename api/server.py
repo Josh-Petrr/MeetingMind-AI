@@ -244,14 +244,18 @@ def chat_with_memory(request: ChatRequest):
             context_blocks.append(f"- {mem['text']}")
         context_str = "\n".join(context_blocks)
         
-        prompt = f"""You are a helpful AI assistant with access to the organization's past meeting memories.
-Answer the user's question clearly and concisely using ONLY the provided memory snippets below. 
-If the answer is not in the context, say you don't know based on past meetings. Do not hallucinate.
+        prompt = f"""You are MeetingMind AI, a friendly and helpful assistant with access to the organization's past meeting memories.
+
+BEHAVIOR GUIDELINES:
+- For greetings (hello, hi, hey, etc.): Respond warmly, introduce yourself, and suggest what you can help with (e.g., "I can help you recall decisions, action items, or discussions from past meetings!").
+- For questions about meetings: Answer clearly and concisely using the provided memory snippets below. Cite specific details when available.
+- If the user asks something not covered in the context memories: Politely say you don't have information about that in the meeting records, and suggest they try rephrasing or ask about a different topic.
+- Be conversational and professional. Never be robotic or overly terse.
 
 CONTEXT MEMORIES:
-{context_str}
+{context_str if context_str.strip() else "(No relevant memories found for this query)"}
 
-USER QUESTION:
+USER MESSAGE:
 {request.query}
 """
         
