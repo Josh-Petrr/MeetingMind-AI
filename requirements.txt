@@ -2,7 +2,7 @@
 lyzr-python-sdk
 
 # Vector Database (Hackathon Mandatory)
-qdrant-client
+qdrant-client==1.9.2
 
 # LLM Provider - Google Gemini
 google-genai
