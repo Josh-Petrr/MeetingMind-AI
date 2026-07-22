@@ -61,18 +61,21 @@ export default function SearchPage() {
         body: JSON.stringify({ query: userMsg, org_id: "org_demo_123" }),
       });
 
-      if (!res.ok) throw new Error("Chat failed");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "Chat failed");
+      }
 
       const data = await res.json();
       setMessages(prev => [
         ...prev,
         { role: "assistant", content: data.answer, sources: data.sources }
       ]);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       setMessages(prev => [
         ...prev,
-        { role: "assistant", content: "Sorry, I encountered an error searching the memory banks." }
+        { role: "assistant", content: `Sorry, I encountered an error: ${err.message}` }
       ]);
     } finally {
       setIsTyping(false);
