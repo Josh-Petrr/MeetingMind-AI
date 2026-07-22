@@ -3,11 +3,11 @@ from typing import Optional
 
 class Settings(BaseSettings):
     # Core API Keys
-    LYZR_API_KEY: str
-    GOOGLE_API_KEY: str
-    QDRANT_URL: str
-    QDRANT_API_KEY: str
-    DATABASE_URL: str
+    LYZR_API_KEY: str = ""
+    GOOGLE_API_KEY: str = ""
+    QDRANT_URL: str = ""
+    QDRANT_API_KEY: str = ""
+    DATABASE_URL: str = "postgresql://dummy:dummy@localhost/dummy"
     
     # Environment config
     ENVIRONMENT: str = "development"
