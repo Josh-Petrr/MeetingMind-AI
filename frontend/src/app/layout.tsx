@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   description: "Enterprise Meeting Intelligence Platform",
 };
 
+import { Toaster } from "react-hot-toast";
+import { GlobalPoller } from "@/components/GlobalPoller";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -25,6 +28,9 @@ export default function RootLayout({
         <main className="flex-1 overflow-y-auto">
           {children}
         </main>
+        
+        <Toaster position="top-right" />
+        <GlobalPoller />
       </body>
     </html>
   );

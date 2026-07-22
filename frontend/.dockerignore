@@ -1,0 +1,29 @@
+# Secrets
+.env
+.env.local
+.env.production
+.env.development
+
+# Version control
+.git
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Next.js
+.next/
+out/
+build/
+
+# IDE and Editor
+.vscode/
+.idea/
+.DS_Store
+.copilot/
+CLAUDE.md
+
+# Documentation
+*.md

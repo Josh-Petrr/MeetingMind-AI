@@ -27,6 +27,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from agents.orchestrator import MeetingOrchestrator
 from memory.qdrant_store import QdrantMemoryStore
 from utils.embeddings import EmbeddingService
+from memory.db import db_manager
 
 app = FastAPI(
     title="MeetingMind AI API",
@@ -74,14 +75,13 @@ class SearchRequest(BaseModel):
     memory_type: Optional[str] = None
     min_significance: Optional[float] = None
 
+class ChatRequest(BaseModel):
+    query: str
+    org_id: str
+    history: Optional[List[dict]] = None
 
-# --- Helper Methods ---
 
-def get_meeting_data_path(meeting_id: str) -> str:
-    """Helper to get the path to save/load meeting data."""
-    data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "meetings")
-    os.makedirs(data_dir, exist_ok=True)
-    return os.path.join(data_dir, f"{meeting_id}.json")
+# Database Manager handles meeting data internally
 
 
 def run_pipeline_background(request: ProcessMeetingRequest, meeting_id: str):
@@ -95,18 +95,14 @@ def run_pipeline_background(request: ProcessMeetingRequest, meeting_id: str):
             skip_memory_retrieval=request.skip_memory_retrieval,
         )
         
-        # Save results to a file (in a real app, this goes to PostgreSQL/Supabase)
-        output_path = get_meeting_data_path(meeting_id)
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(result, f, indent=2, ensure_ascii=False)
+        # Save results to PostgreSQL database
+        db_manager.save_meeting(meeting_id, request.org_id, "completed", result)
             
         print(f"[INFO] Background processing complete for meeting {meeting_id}.")
     except Exception as e:
         print(f"[ERROR] Pipeline failed for meeting {meeting_id}: {e}")
-        # Save error state
-        output_path = get_meeting_data_path(meeting_id)
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump({"meeting_id": meeting_id, "pipeline_status": "error", "error": str(e)}, f)
+        # Save error state to DB
+        db_manager.save_meeting(meeting_id, request.org_id, "error", {"meeting_id": meeting_id, "pipeline_status": "error", "error": str(e)})
 
 
 # --- Endpoints ---
@@ -141,46 +137,50 @@ def process_meeting(request: ProcessMeetingRequest, background_tasks: Background
 @app.get("/meetings")
 def list_meetings(org_id: Optional[str] = "org_demo_123"):
     """
-    List all processed meetings stored in the data directory.
+    List all processed meetings stored in the database.
     """
     meetings = []
-    data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "meetings")
-    
-    # Check custom processed meetings
-    if os.path.exists(data_dir):
-        for fname in os.listdir(data_dir):
-            if fname.endswith(".json"):
-                fpath = os.path.join(data_dir, fname)
-                try:
-                    with open(fpath, "r", encoding="utf-8") as f:
-                        mdata = json.load(f)
-                        meetings.append({
-                            "meeting_id": mdata.get("meeting_id", fname.replace(".json", "")),
-                            "org_id": mdata.get("org_id", "Unknown"),
-                            "status": mdata.get("pipeline_status", "completed"),
-                            "action_items_count": mdata.get("anna_output", {}).get("total_action_items", 0),
-                            "decisions_count": mdata.get("anna_output", {}).get("total_decisions", 0),
-                            "summary_snippet": mdata.get("boris_output", {}).get("summary", "")[:120] + "..." if mdata.get("boris_output", {}).get("summary") else "No summary available"
-                        })
-                except Exception:
-                    pass
-
-    # Check demo meeting output if present
-    demo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "pipeline_output.json")
-    if os.path.exists(demo_path) and not any(m["meeting_id"] == "meeting_demo_001" for m in meetings):
-        try:
-            with open(demo_path, "r", encoding="utf-8") as f:
-                mdata = json.load(f)
-                meetings.append({
-                    "meeting_id": "meeting_demo_001",
-                    "org_id": mdata.get("org_id", "org_demo_001"),
-                    "status": "completed",
-                    "action_items_count": mdata.get("anna_output", {}).get("total_action_items", 0),
-                    "decisions_count": mdata.get("anna_output", {}).get("total_decisions", 0),
-                    "summary_snippet": mdata.get("boris_output", {}).get("summary", "")[:120] + "..."
-                })
-        except Exception:
-            pass
+    rows = db_manager.list_meetings(org_id)
+    for row in rows:
+        mdata = row["data"] or {}
+        boris_output = mdata.get("boris_output") or {}
+        anna_output = mdata.get("anna_output") or {}
+        
+        # Robustly extract the summary text
+        summary_text = ""
+        if isinstance(boris_output, dict):
+            summary_text = boris_output.get("summary", "")
+        elif isinstance(boris_output, str):
+            summary_text = boris_output
+            
+        # If the extracted summary_text is actually a stringified JSON (due to parser fallback), extract the real summary
+        if isinstance(summary_text, str) and summary_text.strip().startswith("{"):
+            import re
+            try:
+                clean_str = summary_text.replace("```json", "").replace("```", "").strip()
+                parsed = json.loads(clean_str)
+                summary_text = parsed.get("summary", summary_text)
+            except Exception:
+                match = re.search(r'"summary"\s*:\s*"([\s\S]*?)"(?=\s*,\s*"key_topics"|\s*,\s*"decisions"|\s*\})', summary_text)
+                if match:
+                    summary_text = match.group(1).replace('\\n', '\n').replace('\\"', '"')
+                    
+        # Parse anna_output if it's a string
+        if isinstance(anna_output, str):
+            try:
+                clean_str = anna_output.replace("```json", "").replace("```", "").strip()
+                anna_output = json.loads(clean_str)
+            except Exception:
+                anna_output = {}
+        
+        meetings.append({
+            "meeting_id": row["meeting_id"],
+            "org_id": row["org_id"],
+            "status": row["pipeline_status"],
+            "action_items_count": anna_output.get("total_action_items", 0) if isinstance(anna_output, dict) else 0,
+            "decisions_count": anna_output.get("total_decisions", 0) if isinstance(anna_output, dict) else 0,
+            "summary_snippet": (summary_text[:120] + "...") if summary_text else "No summary available"
+        })
 
     return {"meetings": meetings}
 
@@ -190,18 +190,10 @@ def review_meeting(meeting_id: str):
     """
     Get the processed summary and action items for a meeting.
     """
-    output_path = get_meeting_data_path(meeting_id)
-    
-    # Check if the specific meeting file exists
-    if os.path.exists(output_path):
-        with open(output_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-            
-    # For hackathon demo purposes, if it's the demo meeting, check the root data folder
-    demo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "pipeline_output.json")
-    if meeting_id == "meeting_demo_001" and os.path.exists(demo_path):
-        with open(demo_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+    # Fetch from Postgres
+    meeting_data = db_manager.get_meeting(meeting_id)
+    if meeting_data:
+        return meeting_data
             
     raise HTTPException(status_code=404, detail=f"Meeting {meeting_id} not found or still processing.")
 
@@ -231,6 +223,58 @@ def search_memory(request: SearchRequest):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
+
+
+@app.post("/chat")
+def chat_with_memory(request: ChatRequest):
+    """Interactive RAG chat endpoint."""
+    if not request.query.strip():
+        raise HTTPException(status_code=400, detail="Query cannot be empty.")
+        
+    try:
+        query_embedding = embedding_service.embed(request.query)
+        memories = memory_store.search(
+            query_embedding=query_embedding,
+            org_id=request.org_id,
+            top_k=5,
+        )
+        
+        context_blocks = []
+        for mem in memories:
+            context_blocks.append(f"- {mem['text']}")
+        context_str = "\n".join(context_blocks)
+        
+        prompt = f"""You are a helpful AI assistant with access to the organization's past meeting memories.
+Answer the user's question clearly and concisely using ONLY the provided memory snippets below. 
+If the answer is not in the context, say you don't know based on past meetings. Do not hallucinate.
+
+CONTEXT MEMORIES:
+{context_str}
+
+USER QUESTION:
+{request.query}
+"""
+        
+        agent_id = orchestrator.lyzr_manager.create_agent(
+            name="RAG Assistant",
+            role="Knowledge Retrieval Assistant",
+            goal="Answer questions strictly using provided context",
+            instructions="Answer using only the context provided. Do not hallucinate.",
+            description="Chat agent"
+        )
+        
+        raw_response = orchestrator.lyzr_manager.chat(
+            agent_id=agent_id,
+            message=prompt
+        )
+        
+        return {
+            "answer": raw_response,
+            "sources": memories
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Chat failed: {str(e)}")
 
 
 if __name__ == "__main__":

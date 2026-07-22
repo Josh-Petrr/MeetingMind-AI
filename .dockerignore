@@ -1,0 +1,38 @@
+# Secrets and config
+.env
+.env.local
+*.env
+
+# Version control
+.git
+.github
+
+# Python caches
+__pycache__/
+*.pyc
+.pytest_cache/
+.benchmarks/
+
+# IDE and Editor
+.vscode/
+.idea/
+.copilot/
+.DS_Store
+
+# Data and Logs
+data/
+*.log
+
+# Agent caches
+.agent_cache.json
+
+# Local scripts
+main.py
+
+# Tests (usually excluded in production images)
+tests/
+
+# Documentation
+docs/
+*.md
+*.pdf

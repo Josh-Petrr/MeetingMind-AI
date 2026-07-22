@@ -23,6 +23,11 @@ export function Sidebar() {
       href: "/search",
       icon: Brain,
     },
+    {
+      name: "Analytics",
+      href: "/analytics",
+      icon: LayoutDashboard,
+    },
   ];
 
   return (

@@ -79,14 +79,37 @@ export default function ReviewPage() {
     );
   }
 
-  const { pii_report, boris_output, anna_output, max_output, timing } = data;
+  let { pii_report, boris_output, anna_output, max_output, timing } = data;
+
+  // Robustly handle stringified JSON from LLM outputs
+  if (typeof boris_output === "string") {
+    try { boris_output = JSON.parse(boris_output); } catch (e) {}
+  }
+  let displaySummary = boris_output?.summary || "No summary available.";
+  if (typeof displaySummary === "string") {
+    let cleanStr = displaySummary.replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
+    if (cleanStr.startsWith("{")) {
+      try {
+        const parsed = JSON.parse(cleanStr);
+        displaySummary = parsed.summary || cleanStr;
+      } catch (e) {
+        // Fallback: If the LLM put literal newlines inside the string (which breaks JSON.parse)
+        const match = cleanStr.match(/"summary"\s*:\s*"([\s\S]*?)"(?=\s*,\s*"decisions"|\s*\})/);
+        if (match && match[1]) {
+          displaySummary = match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+        } else {
+          displaySummary = cleanStr;
+        }
+      }
+    }
+  }
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-6">
       <header className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           <button 
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/meetings")}
             className="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-white"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -106,6 +129,22 @@ export default function ReviewPage() {
             <Database className="w-4 h-4" />
             {max_output?.stored_count || 0} Memories Saved
           </div>
+          
+          <button 
+            onClick={() => {
+              const mdContent = `# Intelligence Report: ${meetingId}\n\n## Executive Summary\n${displaySummary}\n\n## Key Decisions\n${(anna_output?.decisions || []).map((d: any) => `- ${d.decision}`).join('\n')}\n\n## Action Items\n${(anna_output?.action_items || []).map((a: any) => `- [ ] ${a.task} (@${a.owner})`).join('\n')}`;
+              const blob = new Blob([mdContent], { type: 'text/markdown' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `meeting_${meetingId}_report.md`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium transition-colors"
+          >
+            Export Markdown
+          </button>
         </div>
       </header>
 
@@ -120,7 +159,7 @@ export default function ReviewPage() {
             </div>
             <div className="prose prose-invert max-w-none">
               <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">
-                {boris_output?.summary || "No summary available."}
+                {displaySummary}
               </p>
             </div>
             

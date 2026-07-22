@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UploadCloud, Bot, ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -8,6 +8,17 @@ export default function Home() {
   const [transcript, setTranscript] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const router = useRouter();
+
+  // Load from session storage to persist across tabs
+  useEffect(() => {
+    const saved = sessionStorage.getItem("draftTranscript");
+    if (saved) setTranscript(saved);
+  }, []);
+
+  // Save to session storage whenever it changes
+  useEffect(() => {
+    sessionStorage.setItem("draftTranscript", transcript);
+  }, [transcript]);
 
   const handleProcess = async () => {
     if (!transcript.trim()) return;
@@ -32,8 +43,20 @@ export default function Home() {
 
       const data = await response.json();
       
+      // Add to global poller list so we can notify the user from anywhere
+      const pendingStr = sessionStorage.getItem("pendingMeetings");
+      const pendingList = pendingStr ? JSON.parse(pendingStr) : [];
+      pendingList.push(data.meeting_id);
+      sessionStorage.setItem("pendingMeetings", JSON.stringify(pendingList));
+
+      // Show a toast that background processing started
+      const { toast } = await import("react-hot-toast");
+      toast("Agents dispatched! We'll notify you when extraction is complete.", {
+        icon: '🚀',
+        style: { background: '#1e293b', color: '#fff' }
+      });
+
       // Navigate to the review page right away. 
-      // The review page will handle the polling/waiting for the background task to finish.
       router.push(`/review/${data.meeting_id}`);
     } catch (error) {
       console.error(error);

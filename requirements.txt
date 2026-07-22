@@ -29,3 +29,6 @@ pydantic-settings
 pytest
 pytest-asyncio
 httpx
+
+# Database
+psycopg2-binary

@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     GOOGLE_API_KEY: str
     QDRANT_URL: str
     QDRANT_API_KEY: str
+    DATABASE_URL: str
     
     # Environment config
     ENVIRONMENT: str = "development"
